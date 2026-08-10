@@ -9,18 +9,8 @@ from pathlib import Path
 import os
 import uuid
 import logging
-import smtplib
-import socket
+import requests
 from email.mime.text import MIMEText
-
-# Render's network stack has broken/absent IPv6 egress on the free tier, which
-# makes smtplib pick an unreachable IPv6 address for smtp.gmail.com and fail
-# with "Network is unreachable". Force all DNS lookups to IPv4-only so email
-# sending works reliably.
-_orig_getaddrinfo = socket.getaddrinfo
-def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
-socket.getaddrinfo = _ipv4_only_getaddrinfo
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -36,29 +26,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ---------- EMAIL / ADMIN CONFIG ----------
-GMAIL_USER = os.environ.get("GMAIL_USER")
-GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+# Render's free tier blocks all outbound SMTP ports (465 and 587 both time
+# out), so Gmail SMTP cannot work here. Resend sends email over a normal
+# HTTPS API call instead, which is not blocked.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "Twin Lakes Horncastle <onboarding@resend.dev>")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "anubinjoy@gmail.com")
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "twinlakes-admin")
 
 def send_email(to: str, subject: str, body: str) -> None:
-    """Best-effort email send via Gmail SMTP. Never raises — booking must
-    succeed even if email sending fails (e.g. credentials not configured,
-    or the host blocks outbound SMTP)."""
-    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
-        logger.warning("Email not sent (GMAIL_USER/GMAIL_APP_PASSWORD not set): %s -> %s", subject, to)
+    """Best-effort email send via Resend's HTTP API. Never raises — booking
+    must succeed even if email sending fails (e.g. API key not configured)."""
+    if not RESEND_API_KEY:
+        logger.warning("Email not sent (RESEND_API_KEY not set): %s -> %s", subject, to)
         return
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = GMAIL_USER
-    msg["To"] = to
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
-            server.starttls()
-            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_USER, [to], msg.as_string())
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={"from": FROM_EMAIL, "to": [to], "subject": subject, "text": body},
+            timeout=15,
+        )
+        if resp.status_code >= 300:
+            logger.error("Resend API error sending to %s: %s %s", to, resp.status_code, resp.text)
     except Exception as e:
-        logger.error("Failed to send email to %s via port 587: %s", to, e)
+        logger.error("Failed to send email to %s via Resend: %s", to, e)
 
 def notify_new_entry(kind: str, customer_email: str, customer_subject: str, customer_body: str, admin_body: str) -> None:
     send_email(customer_email, customer_subject, customer_body)
