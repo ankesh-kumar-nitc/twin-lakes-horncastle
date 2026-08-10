@@ -43,20 +43,22 @@ ADMIN_KEY = os.environ.get("ADMIN_KEY", "twinlakes-admin")
 
 def send_email(to: str, subject: str, body: str) -> None:
     """Best-effort email send via Gmail SMTP. Never raises — booking must
-    succeed even if email sending fails (e.g. credentials not configured)."""
+    succeed even if email sending fails (e.g. credentials not configured,
+    or the host blocks outbound SMTP)."""
     if not GMAIL_USER or not GMAIL_APP_PASSWORD:
         logger.warning("Email not sent (GMAIL_USER/GMAIL_APP_PASSWORD not set): %s -> %s", subject, to)
         return
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = GMAIL_USER
+    msg["To"] = to
     try:
-        msg = MIMEText(body)
-        msg["Subject"] = subject
-        msg["From"] = GMAIL_USER
-        msg["To"] = to
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
+            server.starttls()
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
             server.sendmail(GMAIL_USER, [to], msg.as_string())
     except Exception as e:
-        logger.error("Failed to send email to %s: %s", to, e)
+        logger.error("Failed to send email to %s via port 587: %s", to, e)
 
 def notify_new_entry(kind: str, customer_email: str, customer_subject: str, customer_body: str, admin_body: str) -> None:
     send_email(customer_email, customer_subject, customer_body)
