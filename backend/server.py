@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,6 +9,8 @@ from pathlib import Path
 import os
 import uuid
 import logging
+import smtplib
+from email.mime.text import MIMEText
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -23,6 +25,33 @@ api = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ---------- EMAIL / ADMIN CONFIG ----------
+GMAIL_USER = os.environ.get("GMAIL_USER")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "anubinjoy@gmail.com")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "twinlakes-admin")
+
+def send_email(to: str, subject: str, body: str) -> None:
+    """Best-effort email send via Gmail SMTP. Never raises — booking must
+    succeed even if email sending fails (e.g. credentials not configured)."""
+    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+        logger.warning("Email not sent (GMAIL_USER/GMAIL_APP_PASSWORD not set): %s -> %s", subject, to)
+        return
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = GMAIL_USER
+        msg["To"] = to
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_USER, [to], msg.as_string())
+    except Exception as e:
+        logger.error("Failed to send email to %s: %s", to, e)
+
+def notify_new_entry(kind: str, customer_email: str, customer_subject: str, customer_body: str, admin_body: str) -> None:
+    send_email(customer_email, customer_subject, customer_body)
+    send_email(ADMIN_EMAIL, f"New {kind} — Twin Lakes Horncastle", admin_body)
+
 # ---------- CONSTANTS ----------
 ROOMS_SEED = [
     {"id": "small-1", "name": "Small Cabin 1", "size": "small", "capacity": 2, "price": 120, "desc": "Cosy cabin sleeping up to 2 guests."},
@@ -32,7 +61,7 @@ ROOMS_SEED = [
 ]
 SYNDICATE_TOTAL_SLOTS = 25
 SYNDICATE_WAITING_MAX = 10
-SYNDICATE_ANNUAL_FEE = 1450
+SYNDICATE_ANNUAL_FEE = 350
 SYNDICATE_DURATION_DAYS = 365
 DAY_TICKET_BASE_HOURS = 48
 DAY_TICKET_BASE_PRICE = 200
@@ -149,7 +178,7 @@ async def room_availability(room_id: str) -> Dict[str, Any]:
     return {"room_id": room_id, "booked_dates": sorted(list(booked))}
 
 @api.post("/rooms/{room_id}/bookings")
-async def create_room_booking(room_id: str, payload: RoomBookingCreate) -> Dict[str, Any]:
+async def create_room_booking(room_id: str, payload: RoomBookingCreate, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     room = await db.rooms.find_one({"id": room_id})
     if not room:
         raise HTTPException(404, "Room not found")
@@ -186,11 +215,19 @@ async def create_room_booking(room_id: str, payload: RoomBookingCreate) -> Dict[
         "created_at": datetime.utcnow(),
     }
     await db.room_bookings.insert_one(doc)
+    background_tasks.add_task(
+        notify_new_entry,
+        "Room Booking",
+        payload.email,
+        "Your Twin Lakes Horncastle booking is confirmed",
+        f"Hi {payload.guest_name},\n\nYour booking for {room['name']} is confirmed.\nCheck-in: {doc['check_in']}\nCheck-out: {doc['check_out']}\nGuests: {payload.guests}\nTotal: £{total}\n\nWe look forward to welcoming you.\n\nTwin Lakes Horncastle",
+        f"New room booking received.\n\nGuest: {payload.guest_name}\nEmail: {payload.email}\nRoom: {room['name']}\nCheck-in: {doc['check_in']}\nCheck-out: {doc['check_out']}\nGuests: {payload.guests}\nTotal: £{total}",
+    )
     return serialize_booking(doc)
 
 # --- Day Tickets
 @api.post("/day-tickets")
-async def create_day_ticket(payload: DayTicketCreate) -> Dict[str, Any]:
+async def create_day_ticket(payload: DayTicketCreate, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     if payload.hours < DAY_TICKET_BASE_HOURS or (payload.hours - DAY_TICKET_BASE_HOURS) % 24 != 0:
         raise HTTPException(400, "Hours must be >=48 and in 24-hour increments")
     extra_days: int = (payload.hours - DAY_TICKET_BASE_HOURS) // 24
@@ -209,6 +246,14 @@ async def create_day_ticket(payload: DayTicketCreate) -> Dict[str, Any]:
     }
     await db.day_tickets.insert_one(doc)
     doc.pop("_id", None)  # Remove MongoDB ObjectId before returning
+    background_tasks.add_task(
+        notify_new_entry,
+        "Mystery Pool Booking",
+        payload.email,
+        "Your Mystery Pool booking is confirmed",
+        f"Hi {payload.guest_name},\n\nYour exclusive lake hire booking is confirmed.\nStart: {doc['start_date']}\nDuration: {payload.hours} hours\nTotal: £{price}\n\nSee you on the bank!\n\nTwin Lakes Horncastle",
+        f"New Mystery Pool booking received.\n\nName: {payload.guest_name}\nEmail: {payload.email}\nPhone: {payload.phone or '-'}\nStart: {doc['start_date']}\nDuration: {payload.hours} hours\nTotal: £{price}",
+    )
     return {**doc, "created_at": doc["created_at"].isoformat()}
 
 # --- Syndicate
@@ -226,7 +271,7 @@ async def syndicate_status() -> Dict[str, Any]:
     }
 
 @api.post("/syndicate/apply")
-async def syndicate_apply(payload: SyndicateApply) -> Dict[str, Any]:
+async def syndicate_apply(payload: SyndicateApply, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     existing = await db.syndicate_members.find_one({"email": payload.email})
     if existing:
         raise HTTPException(409, "This email has already applied.")
@@ -255,17 +300,30 @@ async def syndicate_apply(payload: SyndicateApply) -> Dict[str, Any]:
         "expires_at": expires_at,
     }
     await db.syndicate_members.insert_one(doc)
+    position = (waiting + 1) if status_val == "waiting" else None
+    if status_val == "member":
+        customer_msg = f"Hi {payload.name},\n\nCongratulations — you're now a Syndicate member at Twin Lakes Horncastle!\nAnnual fee: £{SYNDICATE_ANNUAL_FEE}\nMembership valid until: {expires_at.date().isoformat()}\n\nWe'll be in touch with payment and swim allocation details.\n\nTwin Lakes Horncastle"
+    else:
+        customer_msg = f"Hi {payload.name},\n\nThanks for applying to the Twin Lakes Syndicate. All slots are currently full, so you've been added to the waiting list at position {position}.\nWe'll contact you as soon as a slot opens up.\n\nTwin Lakes Horncastle"
+    background_tasks.add_task(
+        notify_new_entry,
+        "Syndicate Application",
+        payload.email,
+        "Your Twin Lakes Syndicate application",
+        customer_msg,
+        f"New syndicate application received.\n\nName: {payload.name}\nEmail: {payload.email}\nPhone: {payload.phone or '-'}\nExperience: {payload.experience or '-'}\nStatus: {status_val}" + (f"\nWaiting list position: {position}" if position else ""),
+    )
     return {
         "id": doc["id"],
         "status": status_val,
         "joined_at": now.isoformat(),
         "expires_at": expires_at.isoformat() if expires_at else None,
-        "position": (waiting + 1) if status_val == "waiting" else None,
+        "position": position,
     }
 
 # --- Contact
 @api.post("/contact")
-async def create_contact(payload: ContactCreate) -> Dict[str, Any]:
+async def create_contact(payload: ContactCreate, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     doc: Dict[str, Any] = {
         "id": str(uuid.uuid4()),
         "name": payload.name,
@@ -275,7 +333,42 @@ async def create_contact(payload: ContactCreate) -> Dict[str, Any]:
         "created_at": datetime.utcnow(),
     }
     await db.contact_messages.insert_one(doc)
+    background_tasks.add_task(
+        notify_new_entry,
+        "Contact Message",
+        payload.email,
+        "We've received your message — Twin Lakes Horncastle",
+        f"Hi {payload.name},\n\nThanks for getting in touch. We've received your message and will reply shortly.\n\nYour message:\n{payload.message}\n\nTwin Lakes Horncastle",
+        f"New contact form message received.\n\nName: {payload.name}\nEmail: {payload.email}\nSubject: {payload.subject or '-'}\nMessage: {payload.message}",
+    )
     return {"id": doc["id"], "ok": True}
+
+# --- Admin (simple key-protected view of all submissions)
+def clean_docs(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    out = []
+    for d in docs:
+        d = dict(d)
+        d.pop("_id", None)
+        for k, v in list(d.items()):
+            if isinstance(v, datetime):
+                d[k] = v.isoformat()
+        out.append(d)
+    return out
+
+@api.get("/admin/all")
+async def admin_all(key: str = Query(...)) -> Dict[str, Any]:
+    if key != ADMIN_KEY:
+        raise HTTPException(403, "Invalid admin key")
+    day_tickets = await db.day_tickets.find({}).sort("created_at", -1).to_list(500)
+    syndicate = await db.syndicate_members.find({}).sort("joined_at", -1).to_list(500)
+    rooms = await db.room_bookings.find({}).sort("created_at", -1).to_list(500)
+    contacts = await db.contact_messages.find({}).sort("created_at", -1).to_list(500)
+    return {
+        "day_tickets": clean_docs(day_tickets),
+        "syndicate_members": clean_docs(syndicate),
+        "room_bookings": clean_docs(rooms),
+        "contact_messages": clean_docs(contacts),
+    }
 
 app.include_router(api)
 

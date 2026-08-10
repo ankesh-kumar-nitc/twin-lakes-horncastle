@@ -16,9 +16,10 @@ export default function Footer() {
         <div>
           <h4 className="eyebrow mb-4 opacity-70">Explore</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link className="hover:text-white transition-colors" to="/day-ticket-fishing">Day Ticket Fishing</Link></li>
+            <li><Link className="hover:text-white transition-colors" to="/day-ticket-fishing">Exclusive Fisheries</Link></li>
             <li><Link className="hover:text-white transition-colors" to="/syndicate-lake">Syndicate Lake</Link></li>
             <li><Link className="hover:text-white transition-colors" to="/stay-and-dine">Lakeside Lodge</Link></li>
+            <li><Link className="hover:text-white transition-colors" to="/stay-and-dine">Bar &amp; Restaurant</Link></li>
             <li><Link className="hover:text-white transition-colors" to="/events">Events Hall</Link></li>
           </ul>
         </div>
@@ -26,8 +27,8 @@ export default function Footer() {
           <h4 className="eyebrow mb-4 opacity-70">Visit</h4>
           <ul className="space-y-3 text-sm opacity-90">
             <li className="flex gap-2"><MapPin className="w-4 h-4 mt-0.5 opacity-70" strokeWidth={1.5}/> Twin Lakes, Horncastle, Lincolnshire, UK</li>
-            <li className="flex gap-2"><Phone className="w-4 h-4 mt-0.5 opacity-70" strokeWidth={1.5}/> 01507 523456</li>
-            <li className="flex gap-2"><Mail className="w-4 h-4 mt-0.5 opacity-70" strokeWidth={1.5}/> info@twinlakeshorncastle.co.uk</li>
+            <li className="flex gap-2"><Phone className="w-4 h-4 mt-0.5 opacity-70" strokeWidth={1.5}/> 07436 378224</li>
+            <li className="flex gap-2"><Mail className="w-4 h-4 mt-0.5 opacity-70" strokeWidth={1.5}/> anubinjoy@gmail.com</li>
           </ul>
         </div>
         <div>

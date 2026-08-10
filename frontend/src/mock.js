@@ -11,12 +11,12 @@ export const IMAGES = {
 };
 
 export const OFFERINGS = [
-  { title: 'Day Ticket Fishing', desc: 'Premium coarse and carp fishing across our beautifully maintained lakes.', img: IMAGES.dayTicket, link: '/day-ticket-fishing' },
+  { title: 'Exclusive Fisheries', desc: 'Hire the whole lake for your group — The Mystery Pool, exclusively yours for the session.', img: IMAGES.dayTicket, link: '/day-ticket-fishing' },
   { title: 'Syndicate Lake', desc: 'Exclusive, low-pressure fishing for dedicated anglers seeking trophy catches.', img: IMAGES.syndicate, link: '/syndicate-lake' },
   { title: 'Camping', desc: 'Pitch up alongside the lakes for an authentic waterside experience.', img: IMAGES.camping, link: '/stay-and-dine' },
-  { title: 'Lakeside Lodge', desc: 'Comfortable lakeside lodges for the complete angling and leisure retreat.', img: IMAGES.lodge, link: '/stay-and-dine' },
-  { title: 'Onsite Bar & Restaurant', desc: 'Locally sourced cuisine served with views across the water.', img: IMAGES.restaurant, link: '/stay-and-dine' },
-  { title: 'Reception Hall', desc: 'A stunning venue for weddings, celebrations, and corporate events.', img: IMAGES.reception, link: '/events' }
+  { title: 'Lakeside Lodge', desc: 'Comfortable lakeside lodges for the complete angling and leisure retreat.', img: IMAGES.lodge, link: '/stay-and-dine', comingSoon: true },
+  { title: 'Onsite Bar & Restaurant', desc: 'Locally sourced cuisine served with views across the water.', img: IMAGES.restaurant, link: '/stay-and-dine', comingSoon: true },
+  { title: 'Reception Hall', desc: 'A stunning venue for weddings, celebrations, and corporate events.', img: IMAGES.reception, link: '/events', comingSoon: true }
 ];
 
 export const ROOMS = [
@@ -39,14 +39,34 @@ export const SYNDICATE = {
   currentMembers: 23,
   waitingListMax: 10,
   waitingListCount: 4,
-  annualFee: 1450,
+  annualFee: 350,
   duration: 365
 };
 
 export const DAY_TICKET = {
   base: { hours: 48, price: 200 },
   extension: { hours: 24, price: 100 },
-  totalPegs: 10
+  totalPegs: 12
+};
+
+export const MYSTERY_POOL_GALLERY = [
+  '/gallery/mystery-pool/session-01.jpg'
+];
+
+export const SYNDICATE_GALLERY = [
+  '/gallery/syndicate/img01.jpg',
+  '/gallery/syndicate/img02.jpg',
+  '/gallery/syndicate/img03.jpg',
+  '/gallery/syndicate/img04.jpg',
+  '/gallery/syndicate/img05.jpg',
+  '/gallery/syndicate/img06.jpg',
+  '/gallery/syndicate/img07.jpg',
+  '/gallery/syndicate/img08.jpg'
+];
+
+export const WHATSAPP = {
+  mysteryPool: '447886357181',
+  syndicate: '447538762032'
 };
 
 export const GOOGLE_REVIEWS = [
@@ -58,4 +78,4 @@ export const GOOGLE_REVIEWS = [
   { name: 'Rachel Morgan', rating: 5, date: '1 week ago', text: 'The lodge was so cosy — waking up to mist rolling over the water was magical. Cannot wait to return.', avatar: 'RM' }
 ];
 
-export const GOOGLE_SUMMARY = { rating: 4.9, totalReviews: 128 };
+export const GOOGLE_SUMMARY = { rating: 4.3, totalReviews: 44 };

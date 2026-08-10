@@ -12,7 +12,7 @@ function Stars({ count }) {
   );
 }
 
-export default function GoogleReviews() {
+export default function GoogleReviews({ rating = GOOGLE_SUMMARY.rating, totalReviews = GOOGLE_SUMMARY.totalReviews }) {
   return (
     <section className="bg-brand-cream py-24">
       <div className="max-w-[1300px] mx-auto px-6 md:px-10">
@@ -26,9 +26,9 @@ export default function GoogleReviews() {
             </div>
             <div className="h-6 w-px bg-black/15" />
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-serif text-brand-dark">{GOOGLE_SUMMARY.rating}</span>
+              <span className="text-2xl font-serif text-brand-dark">{rating}</span>
               <Stars count={5} />
-              <span className="text-sm text-brand-dark/60">({GOOGLE_SUMMARY.totalReviews} reviews)</span>
+              <span className="text-sm text-brand-dark/60">({totalReviews} reviews)</span>
             </div>
           </div>
         </div>

@@ -47,8 +47,8 @@ export default function Contact() {
             <ul className="space-y-5">
               {[
                 { icon: MapPin, title: 'Address', text: 'Twin Lakes, Horncastle, Lincolnshire, LN9 5PP' },
-                { icon: Phone, title: 'Phone', text: '01507 523456' },
-                { icon: Mail, title: 'Email', text: 'info@twinlakeshorncastle.co.uk' },
+                { icon: Phone, title: 'Phone', text: '07436 378224' },
+                { icon: Mail, title: 'Email', text: 'anubinjoy@gmail.com' },
                 { icon: Clock, title: 'Hours', text: 'Open daily, Dawn – Dusk' }
               ].map(c => (
                 <li key={c.title} className="flex items-start gap-4">

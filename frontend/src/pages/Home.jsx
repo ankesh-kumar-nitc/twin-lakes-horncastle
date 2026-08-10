@@ -43,9 +43,12 @@ export default function Home() {
             {OFFERINGS.map((o) => (
               <Link key={o.title} to={o.link} className="group relative block overflow-hidden rounded-sm bg-brand-green aspect-[4/5]">
                 <div className="absolute inset-0">
-                  <img src={o.img} alt={o.title} className="card-hover-img w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+                  <img src={o.img} alt={o.title} className={`card-hover-img w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity duration-500 ${o.comingSoon ? 'blur-md scale-110' : ''}`} />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                {o.comingSoon && (
+                  <span className="absolute top-4 right-4 px-3 py-1 rounded-sm bg-brand-terracotta text-white text-[11px] tracking-[0.15em] uppercase">Coming Soon</span>
+                )}
                 <div className="absolute inset-0 p-7 flex flex-col justify-end text-white">
                   <h3 className="font-serif text-2xl md:text-3xl mb-2">{o.title}</h3>
                   <p className="text-sm opacity-85 mb-4 leading-relaxed">{o.desc}</p>

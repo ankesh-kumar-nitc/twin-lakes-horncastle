@@ -11,7 +11,7 @@ export default function Events() {
   return (
     <div>
       <Header transparent />
-      <PageHero eyebrow="The Gathering" title="Events & Reception" image={IMAGES.reception} />
+      <PageHero eyebrow="The Gathering" title="Events & Reception" image={IMAGES.reception} blur />
 
       {/* Coming Soon banner */}
       <div className="bg-brand-terracotta text-white">
@@ -53,7 +53,7 @@ export default function Events() {
       <section className="py-20 bg-white">
         <div className="max-w-[1300px] mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
-            <img src={IMAGES.reception} alt="Events venue interior" className="w-full h-full object-cover"/>
+            <img src={IMAGES.reception} alt="Events venue interior" className="w-full h-full object-cover blur-md scale-110"/>
           </div>
           <div>
             <p className="eyebrow text-brand-terracotta mb-4">Weddings & Celebrations</p>

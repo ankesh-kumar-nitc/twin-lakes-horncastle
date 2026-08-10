@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import GoogleReviews from '../components/GoogleReviews';
 import PageHero from '../components/PageHero';
+import ComingSoonBanner from '../components/ComingSoonBanner';
 import RoomBookingPanel from '../components/RoomBookingPanel';
 import { IMAGES, ROOMS } from '../mock';
 import { Bed, Wifi, Coffee, Trees, Users, UtensilsCrossed, Flame, Wine } from 'lucide-react';
@@ -29,7 +30,7 @@ function IntroSection() {
     <section className="py-20 md:py-24 bg-brand-cream">
       <div className="max-w-[1300px] mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
         <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-          <img src={IMAGES.lodge} alt="Lakeside lodge" className="w-full h-full object-cover" />
+          <img src={IMAGES.lodge} alt="Lakeside lodge" className="w-full h-full object-cover blur-md scale-110" />
         </div>
         <div>
           <p className="eyebrow text-brand-terracotta mb-4">Short Stays</p>
@@ -57,7 +58,7 @@ function RoomShowcase({ room }) {
   return (
     <div>
       <div className="aspect-[4/3] overflow-hidden rounded-sm mb-6">
-        <img src={room.size === 'small' ? IMAGES.lodge : IMAGES.reception} alt={room.name} className="w-full h-full object-cover" />
+        <img src={room.size === 'small' ? IMAGES.lodge : IMAGES.reception} alt={room.name} className="w-full h-full object-cover blur-md scale-110" />
       </div>
       <h3 className="font-serif text-3xl text-brand-dark mb-2">{room.name}</h3>
       <p className="text-brand-dark/60 mb-6">{room.desc}</p>
@@ -98,7 +99,7 @@ function RestaurantSection() {
           </div>
         </div>
         <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-          <img src={IMAGES.restaurant} alt="Onsite Restaurant" className="w-full h-full object-cover" />
+          <img src={IMAGES.restaurant} alt="Onsite Restaurant" className="w-full h-full object-cover blur-md scale-110" />
         </div>
       </div>
     </section>
@@ -130,7 +131,8 @@ export default function StayAndDine() {
   return (
     <div>
       <Header transparent />
-      <PageHero eyebrow="The Lodge & Hearth" title="Lakeside Lodge" image={IMAGES.lodge} />
+      <PageHero eyebrow="The Lodge & Hearth" title="Lakeside Lodge" image={IMAGES.lodge} blur />
+      <ComingSoonBanner text="Our lakeside lodges and onsite restaurant are undergoing the final touches and will be opening soon." />
       <IntroSection />
 
       <section id="booking" className="py-20 md:py-24 bg-white">

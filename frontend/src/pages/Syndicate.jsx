@@ -4,17 +4,18 @@ import Footer from '../components/Footer';
 import GoogleReviews from '../components/GoogleReviews';
 import PageHero from '../components/PageHero';
 import SyndicateApplicationForm from '../components/SyndicateApplicationForm';
-import { IMAGES } from '../mock';
-import { Users, Trophy, Fish, Clock } from 'lucide-react';
+import Gallery from '../components/Gallery';
+import WhatsAppButton from '../components/WhatsAppButton';
+import { IMAGES, SYNDICATE_GALLERY, WHATSAPP } from '../mock';
+import { Trophy, Fish, Clock } from 'lucide-react';
 import { Toaster } from '../components/ui/toaster';
 import { getSyndicateStatus } from '../api';
 import { logger } from '../utils/logger';
 
-const DEFAULT_STATUS = { members: 0, total_slots: 25, waiting: 0, waiting_max: 10, annual_fee: 1450, duration_days: 365 };
+const DEFAULT_STATUS = { members: 0, total_slots: 25, waiting: 0, waiting_max: 10, annual_fee: 350, duration_days: 365 };
 
 const PERKS = [
-  { icon: Users, title: 'Limited to 25 Members', desc: 'Uncrowded banks, always.' },
-  { icon: Fish, title: 'Specimen Carp to 40lb+', desc: 'Meticulously stocked waters.' },
+  { icon: Fish, title: 'Specimen Carp to 36lb+', desc: 'Meticulously stocked waters.' },
   { icon: Clock, title: '24-hour Fishing', desc: 'Round-the-clock access year round.' },
   { icon: Trophy, title: 'Priority Peg Booking', desc: 'Reserve prime swims in advance.' },
 ];
@@ -113,8 +114,13 @@ export default function Syndicate() {
 
       <section className="py-20 md:py-24 bg-brand-cream">
         <StatsGrid status={status} loading={loading} slotsLeft={slotsLeft} waitLeft={waitLeft} isFull={isFull} />
+        <div className="max-w-[1300px] mx-auto px-6 md:px-10 flex justify-center mb-14">
+          <WhatsAppButton phone={WHATSAPP.syndicate} label="Chat with the Lake Manager" />
+        </div>
         <SyndicateApplicationForm status={status} isFull={isFull} slotsLeft={slotsLeft} onApplied={refresh} />
       </section>
+
+      <Gallery title="The Syndicate Lake" images={SYNDICATE_GALLERY} />
 
       <GoogleReviews />
       <Footer />

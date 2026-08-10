@@ -7,6 +7,7 @@ import Syndicate from './pages/Syndicate';
 import StayAndDine from './pages/StayAndDine';
 import Events from './pages/Events';
 import Contact from './pages/Contact';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/stay-and-dine" element={<StayAndDine />} />
           <Route path="/events" element={<Events />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </BrowserRouter>
     </div>

@@ -4,7 +4,7 @@ import { Compass, Menu, X } from 'lucide-react';
 
 const NAV = [
   { label: 'Home', path: '/' },
-  { label: 'Day Ticket Lake', path: '/day-ticket-fishing' },
+  { label: 'Exclusive Fisheries', path: '/day-ticket-fishing' },
   { label: 'Syndicate Lake', path: '/syndicate-lake' },
   { label: 'Lakeside Lodge', path: '/stay-and-dine' },
   { label: 'Bar & Restaurant', path: '/stay-and-dine#restaurant' },
