@@ -357,7 +357,7 @@ def clean_docs(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 @api.get("/admin/all")
 async def admin_all(key: str = Query(...)) -> Dict[str, Any]:
-    if key != ADMIN_KEY:
+    if key.strip() != ADMIN_KEY.strip():
         raise HTTPException(403, "Invalid admin key")
     day_tickets = await db.day_tickets.find({}).sort("created_at", -1).to_list(500)
     syndicate = await db.syndicate_members.find({}).sort("joined_at", -1).to_list(500)
