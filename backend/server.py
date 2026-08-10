@@ -10,7 +10,17 @@ import os
 import uuid
 import logging
 import smtplib
+import socket
 from email.mime.text import MIMEText
+
+# Render's network stack has broken/absent IPv6 egress on the free tier, which
+# makes smtplib pick an unreachable IPv6 address for smtp.gmail.com and fail
+# with "Network is unreachable". Force all DNS lookups to IPv4-only so email
+# sending works reliably.
+_orig_getaddrinfo = socket.getaddrinfo
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _ipv4_only_getaddrinfo
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
